@@ -1,75 +1,102 @@
-from unittest.mock import patch
-
 import pytest
 
 from pathwalker import PathWalker
 
 
-# __init__ tests
-def test_init_valid() -> None:
-    """Do: Initialize PathWalker with valid path. Expect: path stored correctly."""
-    with patch("pathwalker.os.path.exists", return_value=True), \
-         patch("pathwalker.os.path.isdir", return_value=True):
-        walker = PathWalker("\\tmp")
-        assert walker.path == "C:\\tmp"
+# ---------- INIT TESTS ----------
+
+@pytest.mark.parametrize(
+    "path, expected",
+    [
+        ("\\tmp", "C:\\tmp"),
+    ],
+)
+def test_init_valid(path, expected) -> None:
+    """
+    Do: Initialize PathWalker with valid paths.
+    Expect: path stored correctly.
+    """
+    walker = PathWalker(path)
+    assert walker.path == expected
 
 
-def test_init_path_not_found() -> None:
-    """Do: Initialize PathWalker with non-existent path. Expect: NameError raised."""
-    with patch("pathwalker.os.path.exists", return_value=False):
-        with pytest.raises(NameError):
-            PathWalker("fake")
+@pytest.mark.parametrize(
+    "path, expected_exception",
+    [
+        ("does_not_exist", NameError),
+        ("C:\\tmp\\dir1\\file2.txt", NotADirectoryError),
+    ],
+)
+def test_init_invalid(path, expected_exception) -> None:
+    """
+    Do: Initialize PathWalker with invalid paths.
+    Expect: correct exception is raised.
+    """
+    with pytest.raises(expected_exception):
+        PathWalker(path)
 
 
-def test_init_not_dir() -> None:
-    """Do: Initialize PathWalker with file path. Expect: NotADirectoryError raised."""
-    with patch("pathwalker.os.path.exists", return_value=True), \
-         patch("pathwalker.os.path.isdir", return_value=False):
-        with pytest.raises(NotADirectoryError):
-            PathWalker("fake")
+# ---------- REPRESENTATION TESTS ----------
+
+@pytest.mark.parametrize(
+    "path, func, expected",
+    [
+        ("\\tmp", repr, "PathWalker('C:\\tmp')"),
+        ("\\tmp", str, "C:\\tmp"),
+    ],
+)
+def test_representation(path, func, expected) -> None:
+    """
+    Do: Convert PathWalker to string representations.
+    Expect: correct output for repr and str.
+    """
+    assert func(PathWalker(path)) == expected
 
 
-# representation tests
-def test_repr() -> None:
-    """Do: Check __repr__ returns correct string."""
-    with patch("pathwalker.os.path.exists", return_value=True), \
-         patch("pathwalker.os.path.isdir", return_value=True):
-        walker = PathWalker("/tmp")
-        assert repr(walker) == "PathWalker('C:\\tmp')"
+# ---------- GETITEM TESTS ----------
+
+@pytest.mark.parametrize(
+    "path, item, expected",
+    [
+        ("\\tmp", "dir1", "C:\\tmp\\dir1"),
+    ],
+)
+def test_get_item_valid(path, item, expected) -> None:
+    """
+    Do: Access subdirectory using getitem.
+    Expect: correct PathWalker path.
+    """
+    new_path = PathWalker(path)[item]
+    assert new_path.path == expected
 
 
-def test_str() -> None:
-    """Do: Check __str__ returns path string."""
-    with patch("pathwalker.os.path.exists", return_value=True), \
-         patch("pathwalker.os.path.isdir", return_value=True):
-        walker = PathWalker("/tmp")
-        assert str(walker) == "C:\\tmp"
+@pytest.mark.parametrize(
+    "path, item",
+    [("\\tmp", 123),
+     ("\\tmp", None),
+     ("\\tmp", 5.5)],
+)
+def test_get_item_invalid_type(path, item) -> None:
+    """
+    Do: Access with invalid key types.
+    Expect: TypeError raised.
+    """
+    with pytest.raises(TypeError):
+        PathWalker(path)[item]
 
 
-# navigation tests
-def test_get_item() -> None:
-    """Do: Access subdirectory via __getitem__. Expect: PathWalker instance with correct path."""
-    with patch("pathwalker.os.path.exists", return_value=True), \
-         patch("pathwalker.os.path.isdir", return_value=True):
-        walker = PathWalker("\\tmp")
-        new_path = walker["test"]
-        assert new_path.path == "C:\\tmp\\test"
+# ---------- ITER TESTS ----------
 
-
-def test_get_item_invalid_type() -> None:
-    """Do: Access with non-string key. Expect: TypeError raised."""
-    with patch("pathwalker.os.path.exists", return_value=True), \
-         patch("pathwalker.os.path.isdir", return_value=True):
-        walker = PathWalker("\\tmp")
-        with pytest.raises(TypeError):
-            walker[123]
-
-
-def test_iter() -> None:
-    """Do: Iterate over directory contents. Expect: returns sorted list."""
-    with patch("pathwalker.os.path.exists", return_value=True), \
-         patch("pathwalker.os.path.isdir", return_value=True), \
-         patch("pathwalker.os.listdir", return_value=["one", "two"]):
-        walker = PathWalker("\\tmp")
-        files = list(walker)
-        assert files == ["one", "two"]
+@pytest.mark.parametrize(
+    "path, expected",
+    [
+        ("\\tmp", ["dir1", "file1.txt"]),
+    ],
+)
+def test_iter(path, expected) -> None:
+    """
+    Do: Iterate over directory contents.
+    Expect: correct list of files/directories.
+    """
+    files = list(PathWalker(path))
+    assert sorted(files) == sorted(expected)

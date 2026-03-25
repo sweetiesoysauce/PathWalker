@@ -1,6 +1,7 @@
 import os
 from typing import Iterator, Union
 
+TAB = "    "
 
 class PathWalker:
     """
@@ -15,6 +16,9 @@ class PathWalker:
         @param path (str): the path to create the instance to.
             if the path isn't absolute, it will auto-append it to the CWD.
         """
+        if not isinstance(path, str):
+            raise TypeError(f"Expected string, got {type(path).__name__}")
+
         self.path = os.path.abspath(os.path.expanduser(path))
 
         if not os.path.exists(self.path):
@@ -24,9 +28,19 @@ class PathWalker:
             raise NotADirectoryError(f"Given path ({self.path}) is not a directory!")
 
     def __repr__(self) -> str:
+        """
+        Represents the class and its variables for debugging.
+
+        @return: A debugging string containing class name and current path.
+        """
         return f"{self.__class__.__name__}('{self.path}')"
 
     def __str__(self) -> str:
+        """
+        Converts the variable to a readable string.
+
+        @return: A string containing the current path.
+        """
         return self.path
 
     def __getitem__(self, item: str) -> "PathWalker":
@@ -37,8 +51,6 @@ class PathWalker:
 
         @return: Instance pointing to the new path.
         """
-        if not isinstance(item, str):
-            raise TypeError(f"Expected string, received {type(item)}")
 
         return PathWalker(os.path.join(self.path, item))
 
@@ -51,21 +63,21 @@ class PathWalker:
         return iter(os.listdir(self.path))
 
 
-def recurse_file(directory: Union[str, PathWalker], indent: str = "") -> None:
+def recurse_files(directory: Union[str, PathWalker], indent: int = 0) -> None:
     """
     Recursively print the files and directories in a path.
 
     @param directory (str | PathWalker): Path to traverse.
     @param indent (str): Indentation for nested files/folders. (irrelevant)
     """
-    if isinstance(directory, str):
-        directory = PathWalker(directory)
+    directory = PathWalker(directory) if isinstance(directory, str) else directory
 
-    for name in sorted(directory):
+
+    for name in directory:
         full_path = os.path.join(directory.path, name)
 
         if os.path.isfile(full_path):
-            print(f"{indent}- {name}")
+            print(f"{indent * TAB}- {name}")
         else:
-            print(indent + name)
-            recurse_file(full_path, f"{indent}  ")
+            print(f"{indent * TAB} {name}")
+            recurse_files(PathWalker(full_path), ++indent)
