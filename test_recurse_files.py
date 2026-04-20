@@ -4,12 +4,14 @@ from pathwalker import PathWalker, recurse_files
 @pytest.mark.parametrize(
     "path, expected",
     [
-        ("\\tmp", "file1"),
+        ("home", "user\n    dir1\n        - file2.txt\n    - file1.txt\n"),
     ],
 )
-def test_recurse_file(capsys, os_patches, path, expected) -> None:
+def test_recurse_file(capsys, path, expected) -> None:
     """Do: Recursively print files in mocked directory. Expect: output contains file names."""
     walker = PathWalker(path)
     recurse_files(walker)
-    output = capsys.readouterr().out
-    assert expected in output
+
+    outputs = capsys.readouterr().out
+
+    assert outputs == expected

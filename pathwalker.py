@@ -79,5 +79,5 @@ def recurse_files(directory: Union[str, PathWalker], indent: int = 0) -> None:
         if os.path.isfile(full_path):
             print(f"{indent * TAB}- {name}")
         else:
-            print(f"{indent * TAB} {name}")
-            recurse_files(PathWalker(full_path), ++indent)
+            print(f"{indent * TAB}{name}")
+            recurse_files(PathWalker(full_path), indent + 1)
