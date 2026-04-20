@@ -1,4 +1,3 @@
-from unittest.mock import patch
 import pytest
 from pathwalker import PathWalker, recurse_files
 
