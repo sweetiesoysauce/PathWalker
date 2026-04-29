@@ -1,23 +1,24 @@
 import pytest
-from unittest.mock import Mock
-
+import os
 FAKE_FS = {
     "home": {
         "user": {
             "dir1": {
+                "dir3": {},
                 "file2.txt": None,
             },
             "file1.txt": None,
+            "dir4": {},
         }
     },
     "dir2": {},
     "file3": None,
 }
 
-HOME = ["home", "user"]
+HOME = "home\\user"
 
 def _walk(path: str):
-    parts = fake_abspath(fake_expanduser(path)).split("\\")
+    parts = path.split("\\")
     node = FAKE_FS
 
     for part in parts:
@@ -31,27 +32,18 @@ def _walk(path: str):
 def fake_expanduser(path):
 
     if path.startswith("~"):
-        path = "\\".join(HOME) + path[1:]
+        path = HOME + path[1:]
 
     return path
 
 def fake_abspath(path):
-    parts = path.split("\\")
+    if path.startswith("\\") :
+        path = HOME + path
 
-    if path.startswith("\\"):
-        parts = HOME + parts[1:]
+    elif not path.startswith("home") :
+        path = HOME + "\\" + path
 
-    normalized = []
-    for part in parts:
-        if part in ("", "."):
-            continue
-        elif part == "..":
-            if normalized:
-                normalized.pop()
-        else:
-            normalized.append(part)
-
-    return "\\".join(normalized)
+    return os.path.normpath(path)
 def fake_exists(path):
     return _walk(path) is not False
 

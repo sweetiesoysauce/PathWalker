@@ -51,7 +51,6 @@ class PathWalker:
 
         @return: Instance pointing to the new path.
         """
-
         return PathWalker(os.path.join(self.path, item))
 
     def __iter__(self) -> Iterator[str]:
